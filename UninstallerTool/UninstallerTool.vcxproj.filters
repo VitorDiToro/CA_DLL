@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CustomAction\include\BaseLogger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\CleanupFactory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\CleanupManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\ConsoleLogger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\CustomAction.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\DirectoryCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\FileCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\ICleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\ILogger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\LoggerFactory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\MSILogger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\PathConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\RegistryCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\RegistryConstants.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\RegistryEntriesCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\UUIDs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\V3FilesCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CustomAction\include\V4FilesCleanupStrategy.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+</Project>
