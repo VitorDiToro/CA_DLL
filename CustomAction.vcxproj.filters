@@ -1,0 +1,80 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\DLL.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\UUIDs.h">
+      <Filter>Constants</Filter>
+    </ClInclude>
+    <ClInclude Include="include\PathConstants.h">
+      <Filter>Constants</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RegistryConstants.h">
+      <Filter>Constants</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MSILogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ConsoleLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\LoggerFactory.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ILogger.h">
+      <Filter>Logger\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="include\BaseLogger.h">
+      <Filter>Logger\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="include\V4FilesCleanupStrategy.h">
+      <Filter>Cleanup\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\V3FilesCleanupStrategy.h">
+      <Filter>Cleanup\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CleanupManager.h">
+      <Filter>Cleanup</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RegistryCleanupStrategy.h">
+      <Filter>Cleanup\Strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FileCleanupStrategy.h">
+      <Filter>Cleanup\Strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\DirectoryCleanupStrategy.h">
+      <Filter>Cleanup\Strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ICleanupStrategy.h">
+      <Filter>Cleanup\Strategy</Filter>
+    </ClInclude>
+    <ClInclude Include="include\RegistryEntriesCleanupStrategy.h">
+      <Filter>Cleanup\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CleanupFactory.h">
+      <Filter>Cleanup\Factory</Filter>
+    </ClInclude>
+    <ClInclude Include="include\CustomAction.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Constants">
+      <UniqueIdentifier>{be9c35f0-01c7-4da6-b5aa-f23e475c10e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{86464534-4e54-4016-b296-074e78633f29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cleanup">
+      <UniqueIdentifier>{d78fe854-7d8c-422d-ae6c-b7910ad411f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logger\Base">
+      <UniqueIdentifier>{9bd92bef-1798-4a10-bd0a-9c2685da508d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cleanup\Factory">
+      <UniqueIdentifier>{0b4c6285-bc7c-4dec-81b4-7566576f614d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Cleanup\Strategy">
+      <UniqueIdentifier>{1ab7d05c-e59b-4109-a4cd-1c3183762f4a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
