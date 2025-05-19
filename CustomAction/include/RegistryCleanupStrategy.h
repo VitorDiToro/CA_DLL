@@ -15,7 +15,13 @@ namespace WinLogon::CustomActions::Cleanup
     protected:
         std::wstring formatKeyPath(const std::pair<HKEY, std::wstring>& keyPair) const
         {
-            return Constants::RegistryConstants::hKeyToWStr.at(keyPair.first) + L"\\" + keyPair.second;
+            auto it = Constants::RegistryConstants::hKeyToWStr.find(keyPair.first);
+            if (it == Constants::RegistryConstants::hKeyToWStr.end( ))
+            {
+                // Error fallback
+                return L"UNKNOWN_KEY\\" + keyPair.second;
+            }
+            return it->second + L"\\" + keyPair.second;
         }
 
         std::wstring getFriendlyErrorMessage(LONG errorCode) const

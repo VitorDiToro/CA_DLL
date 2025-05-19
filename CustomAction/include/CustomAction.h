@@ -29,7 +29,7 @@ namespace WinLogon::CustomActions
                 cleanupManager->executeAll( );
 
                 // Get current date and time
-                std::string currentDateTime = getCurrentDateTime( );
+                std::wstring currentDateTime = getCurrentDateTime( );
 
                 // Write to log file
                 if (writeInstallationLogFile(currentDateTime))
@@ -111,10 +111,7 @@ namespace WinLogon::CustomActions
                 }
                 else
                 {
-                    // Get error code
                     DWORD errorCode = GetLastError( );
-
-                    // Report failure in log
                     logger->log(Logger::LogLevel::LOG_ERROR,
                                 std::format(L"Error deleting the file. Error code: {}", errorCode));
 
@@ -131,7 +128,6 @@ namespace WinLogon::CustomActions
             }
             catch (...)
             {
-                // Report exception in log
                 logger->log(Logger::LogLevel::LOG_ERROR,
                             std::format(L"Exception when trying to delete file {}", filePath));
                 return ERROR_INSTALL_FAILURE;
@@ -175,29 +171,29 @@ namespace WinLogon::CustomActions
     private:
         CustomActions( ) = delete;  // Prevents instantiation
 
-        static std::string getCurrentDateTime( )
+        static std::wstring getCurrentDateTime( )
         {
             try
             {
                 const auto now = std::chrono::system_clock::now( );
                 const auto localTime = std::chrono::current_zone( )->to_local(now);
-                return std::format("{:%d/%m/%Y %H:%M:%S}", localTime);
+                return std::format(L"{:%d/%m/%Y %H:%M:%S}", localTime);
             }
             catch (...)
             {
                 // In case of any error, return a default message
-                return "Unknown date";
+                return L"Unknown date";
             }
         }
 
-        static bool writeInstallationLogFile(const std::string& dateTimeStr)
+        static bool writeInstallationLogFile(const std::wstring& dateTimeStr)
         {
             try
             {
-                std::ofstream logFile("C:\\installation_test.txt");
+                std::wofstream logFile(L"C:\\installation_test.txt");
                 if (logFile.is_open( ))
                 {
-                    logFile << std::format("Installation performed on: {}", dateTimeStr) << std::endl;
+                    logFile << std::format(L"Installation performed on: {}", dateTimeStr) << std::endl;
                     logFile.close( );
                     return true;
                 }

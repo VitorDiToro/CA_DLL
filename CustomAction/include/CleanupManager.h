@@ -15,7 +15,7 @@ namespace WinLogon::CustomActions::Cleanup
 
         void addStrategy(std::unique_ptr<ICleanupStrategy> strategy)
         {
-            strategies.push_back(std::move(strategy));
+            strategies.emplace_back(std::move(strategy));
         }
 
         bool executeAll()

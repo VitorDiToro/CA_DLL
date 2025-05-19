@@ -10,7 +10,7 @@
 #include "LoggerFactory.h"
 #include "CleanupFactory.h"
 
-static const bool IsRunAsAdmin( )
+static bool IsRunAsAdmin( )
 {
     BOOL isAdmin = FALSE;
     PSID adminGroup = nullptr;
@@ -53,7 +53,6 @@ public:
 };
 
 
-// Função principal
 int main( )
 {
 
@@ -71,51 +70,29 @@ using namespace WinLogon::CustomActions;
     // Initialize the MSI handle with a null pointer, since we're not using it in the EXE application
     MSIHANDLE hInstall{};
 
-    // Criar um display de progresso para o console
     ConsoleProgressDisplay progressDisplay;
-
-    // Criar o logger
     auto logger = Logger::LoggerFactory::createLogger(hInstall);
 
     try
     {
-        // Executar limpeza de arquivos V3
+        // V3 Files
         logger->log(Logger::LogLevel::LOG_INFO, L"Executing V3 files cleanup...");
         auto v3CleanupManager = Cleanup::CleanupFactory::createV3CleanupManager(hInstall);
         bool v3Success = v3CleanupManager->executeAll( );
         progressDisplay.onTaskCompleted(L"V3 Files Cleanup", v3Success);
 
-        // Executar limpeza de arquivos V4
+        // V4 Files
         logger->log(Logger::LogLevel::LOG_INFO, L"Executing V4 files cleanup...");
         auto v4CleanupManager = Cleanup::CleanupFactory::createV4CleanupManager(hInstall);
         bool v4Success = v4CleanupManager->executeAll( );
         progressDisplay.onTaskCompleted(L"V4 Files Cleanup", v4Success);
 
-        // Executar limpeza de registros
+        // Registries
         logger->log(Logger::LogLevel::LOG_INFO, L"Executing registry cleanup...");
         auto registryCleanupManager = Cleanup::CleanupFactory::createRegistryCleanupManager(hInstall);
         bool registrySuccess = registryCleanupManager->executeAll( );
         progressDisplay.onTaskCompleted(L"Registry Cleanup", registrySuccess);
 
-        // Alternativa: usar o gerenciador para cada estratégia sequencialmente
-        /*
-        logger->log(Logger::LogLevel::LOG_INFO, L"Executing all cleanup strategies...");
-
-        // Criar os gerenciadores
-        auto v3CleanupManager = Cleanup::CleanupFactory::createV3CleanupManager(hInstall);
-        auto v4CleanupManager = Cleanup::CleanupFactory::createV4CleanupManager(hInstall);
-        auto registryCleanupManager = Cleanup::CleanupFactory::createRegistryCleanupManager(hInstall);
-
-        // Executar cada estratégia
-        bool v3Success = v3CleanupManager->executeAll();
-        bool v4Success = v4CleanupManager->executeAll();
-        bool registrySuccess = registryCleanupManager->executeAll();
-
-        // Verificar sucesso geral
-        bool overallSuccess = v3Success && v4Success && registrySuccess;
-
-        progressDisplay.onTaskCompleted(L"Complete System Cleanup", overallSuccess);
-        */
     }
     catch (const std::exception& e)
     {
