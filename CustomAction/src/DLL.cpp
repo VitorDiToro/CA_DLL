@@ -55,7 +55,17 @@ extern "C" {
 
     __declspec(dllexport) UINT __stdcall CleanAuthPointRegistry(MSIHANDLE hInstall)
     {
-        return WinLogon::CustomActions::CustomActions::cleanAuthPointRegistry(hInstall);
+        return WinLogon::CustomActions::CustomActions::cleanAuthPointRegistries(hInstall);
+    }
+
+    __declspec(dllexport) UINT __stdcall CopyConfigFileToDestination(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::copyConfigFileToDestination(hInstall);
+    }
+
+    __declspec(dllexport) UINT __stdcall OpenFileChooser(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::openFileChooser(hInstall);
     }
 
 #ifdef __cplusplus

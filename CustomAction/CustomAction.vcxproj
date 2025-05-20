@@ -136,6 +136,8 @@
     <ClInclude Include="include\BaseLogger.h" />
     <ClInclude Include="include\CleanupFactory.h" />
     <ClInclude Include="include\CleanupManager.h" />
+    <ClInclude Include="include\ConfigConstants.h" />
+    <ClInclude Include="include\ConfigFileHandler.h" />
     <ClInclude Include="include\ConsoleLogger.h" />
     <ClInclude Include="include\CustomAction.h" />
     <ClInclude Include="include\DirectoryCleanupStrategy.h" />

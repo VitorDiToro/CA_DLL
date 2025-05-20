@@ -8,9 +8,11 @@
 #include <chrono>
 #include <format>
 #include <fstream>
+#include <map>
 
 #include "LoggerFactory.h"
 #include "CleanupFactory.h"
+#include "ConfigFileHandler.h"
 
 namespace WinLogon::CustomActions
 {
@@ -172,7 +174,7 @@ namespace WinLogon::CustomActions
             }
         }
 
-        static UINT cleanAuthPointRegistry(MSIHANDLE hInstall)
+        static UINT cleanAuthPointRegistries(MSIHANDLE hInstall)
         {
             try
             {
@@ -197,6 +199,114 @@ namespace WinLogon::CustomActions
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
                 logger->log(Logger::LogLevel::LOG_ERROR, L"Exception during AuthPoint registry cleanup");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
+
+
+        static UINT copyConfigFileToDestination(MSIHANDLE hInstall)
+        {
+            try
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_INFO, L"Starting copy config file operation...");
+
+                // Get parameters from CustomActionData
+                WCHAR szCustomActionData[4096] = { 0 };
+                DWORD cchCustomActionData = sizeof(szCustomActionData) / sizeof(szCustomActionData[0]);
+                UINT result = MsiGetPropertyW(hInstall, L"CustomActionData", szCustomActionData, &cchCustomActionData);
+                if (result != ERROR_SUCCESS)
+                {
+                    logger->log(Logger::LogLevel::LOG_ERROR, L"Failed to get CustomActionData property");
+                    return ERROR_INSTALL_FAILURE;
+                }
+
+                // Parse CustomActionData (format: key=value;key=value;...)
+                std::map<std::wstring, std::wstring> params;
+                std::wstring customActionData = szCustomActionData;
+                size_t pos = 0;
+                while ((pos = customActionData.find(L";")) != std::wstring::npos)
+                {
+                    std::wstring token = customActionData.substr(0, pos);
+                    size_t equalPos = token.find(L"=");
+                    if (equalPos != std::wstring::npos)
+                    {
+                        std::wstring key = token.substr(0, equalPos);
+                        std::wstring value = token.substr(equalPos + 1);
+                        params[key] = value;
+                    }
+                    customActionData.erase(0, pos + 1);
+                }
+                // Handle the last token
+                if (!customActionData.empty( ))
+                {
+                    size_t equalPos = customActionData.find(L"=");
+                    if (equalPos != std::wstring::npos)
+                    {
+                        std::wstring key = customActionData.substr(0, equalPos);
+                        std::wstring value = customActionData.substr(equalPos + 1);
+                        params[key] = value;
+                    }
+                }
+
+                return Config::ConfigFileHandler::CopyConfigFileToDestination(hInstall, params);
+            }
+            catch (const std::exception& e)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::wstring(L"Exception in copyConfigFileToDestination: ") +
+                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                return ERROR_INSTALL_FAILURE;
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in copyConfigFileToDestination");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
+
+        static UINT openFileChooser(MSIHANDLE hInstall)
+        {
+            try
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_INFO, L"Starting open file chooser operation...");
+
+                // The property to set with the selected file path
+                std::wstring propertyName = L"CONFIG_PATH";
+
+                // Also set CONFIG_PATH_UI for UI display
+                UINT result = Config::ConfigFileHandler::OpenFileChooser(hInstall, propertyName);
+                if (result == ERROR_SUCCESS)
+                {
+                    // Get the value we just set
+                    WCHAR szConfigPath[MAX_PATH] = { 0 };
+                    DWORD cchConfigPath = sizeof(szConfigPath) / sizeof(szConfigPath[0]);
+                    UINT propResult = MsiGetPropertyW(hInstall, propertyName.c_str( ), szConfigPath, &cchConfigPath);
+
+                    if (propResult == ERROR_SUCCESS && szConfigPath[0] != L'\0')
+                    {
+                        // Also set CONFIG_PATH_UI
+                        MsiSetPropertyW(hInstall, L"CONFIG_PATH_UI", szConfigPath);
+                    }
+                }
+
+                return result;
+            }
+            catch (const std::exception& e)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::wstring(L"Exception in openFileChooser: ") +
+                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                return ERROR_INSTALL_FAILURE;
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in openFileChooser");
                 return ERROR_INSTALL_FAILURE;
             }
         }

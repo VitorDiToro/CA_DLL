@@ -19,6 +19,7 @@ namespace WinLogon::CustomActions::Constants
             L"C:\\Program Files\\WatchGuard"
         };
 
+        // Uninstall
         static inline const std::vector<std::filesystem::path> filesFromV3ToRemove = {
             L"C:\\Windows\\System32\\WLcacert.pem",
             L"C:\\Windows\\System32\\wlconfig.cfg",

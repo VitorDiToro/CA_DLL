@@ -59,6 +59,12 @@
     <ClInclude Include="include\AuthPointRegistryCleanupStrategy.h">
       <Filter>Cleanup\Factory</Filter>
     </ClInclude>
+    <ClInclude Include="include\ConfigConstants.h">
+      <Filter>Constants</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ConfigFileHandler.h">
+      <Filter>ConfigHandler</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Constants">
@@ -78,6 +84,9 @@
     </Filter>
     <Filter Include="Cleanup\Strategy">
       <UniqueIdentifier>{1ab7d05c-e59b-4109-a4cd-1c3183762f4a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConfigHandler">
+      <UniqueIdentifier>{5618c87b-6b2b-41e8-bc6c-a829083407d3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
