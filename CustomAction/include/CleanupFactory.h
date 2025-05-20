@@ -8,13 +8,13 @@
 #include "V3FilesCleanupStrategy.h"
 #include "V4FilesCleanupStrategy.h"
 #include "RegistryEntriesCleanupStrategy.h"
+#include "AuthPointRegistryCleanupStrategy.h"
 
 namespace WinLogon::CustomActions::Cleanup
 {
     class CleanupFactory
     {
     public:
-
         template<typename... StrategyTypes>
         static std::unique_ptr<CleanupManager> createManager(MSIHANDLE handle)
         {
@@ -38,18 +38,23 @@ namespace WinLogon::CustomActions::Cleanup
             return createManager<Strategies::RegistryEntriesCleanupStrategy>(handle);
         }
 
-        // Novo método que permite criar um manager com múltiplas estratégias
+        static std::unique_ptr<CleanupManager> createAuthPointRegistryCleanupManager(MSIHANDLE handle)
+        {
+            return createManager<Strategies::AuthPointRegistryCleanupStrategy>(handle);
+        }
+
         static std::unique_ptr<CleanupManager> createFullCleanupManager(MSIHANDLE handle)
         {
             return createManager<
                 Strategies::V3FilesCleanupStrategy,
                 Strategies::V4FilesCleanupStrategy,
-                Strategies::RegistryEntriesCleanupStrategy
-            > (handle);
+                Strategies::RegistryEntriesCleanupStrategy,
+                Strategies::AuthPointRegistryCleanupStrategy
+            >(handle);
         }
 
     private:
-        CleanupFactory( ) = delete;  // Previne instanciação
+        CleanupFactory( ) = delete;  // Prevent initialization
 
         template<typename StrategyType>
         static void addStrategyToManager(std::unique_ptr<CleanupManager> const& manager)

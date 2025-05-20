@@ -144,6 +144,7 @@ namespace WinLogon::CustomActions
                 auto v3CleanupManager = Cleanup::CleanupFactory::createV3CleanupManager(hInstall);
                 auto v4CleanupManager = Cleanup::CleanupFactory::createV4CleanupManager(hInstall);
                 auto registryCleanupManager = Cleanup::CleanupFactory::createRegistryCleanupManager(hInstall);
+                auto authPointRegistryCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
 
                 // Execute each strategy sequentially
                 logger->log(Logger::LogLevel::LOG_INFO, L"Executing V3 files cleanup...");
@@ -155,8 +156,11 @@ namespace WinLogon::CustomActions
                 logger->log(Logger::LogLevel::LOG_INFO, L"Executing registry cleanup...");
                 bool registrySuccess = registryCleanupManager->executeAll( );
 
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing AuthPoint registry cleanup...");
+                bool authPointSuccess = authPointRegistryCleanupManager->executeAll( );
+
                 // Check overall success of all operations
-                bool overallSuccess = v3Success && v4Success && registrySuccess;
+                bool overallSuccess = v3Success && v4Success && registrySuccess && authPointSuccess;
 
                 return overallSuccess ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
             }
@@ -164,6 +168,35 @@ namespace WinLogon::CustomActions
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
                 logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception during full cleanup");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
+
+        static UINT cleanAuthPointRegistry(MSIHANDLE hInstall)
+        {
+            try
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_INFO, L"Starting AuthPoint registry cleanup...");
+
+                auto authPointCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
+                bool success = authPointCleanupManager->executeAll( );
+
+                if (success)
+                {
+                    logger->log(Logger::LogLevel::LOG_INFO, L"AuthPoint registry cleanup completed successfully.");
+                    return ERROR_SUCCESS;
+                }
+                else
+                {
+                    logger->log(Logger::LogLevel::LOG_WARNING, L"AuthPoint registry cleanup completed with warnings.");
+                    return ERROR_INSTALL_FAILURE;
+                }
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Exception during AuthPoint registry cleanup");
                 return ERROR_INSTALL_FAILURE;
             }
         }

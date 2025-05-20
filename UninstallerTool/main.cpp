@@ -56,7 +56,7 @@ public:
 int main( )
 {
 
-using namespace WinLogon::CustomActions;
+    using namespace WinLogon::CustomActions;
 
     if (!IsRunAsAdmin( ))
     {
@@ -93,6 +93,11 @@ using namespace WinLogon::CustomActions;
         bool registrySuccess = registryCleanupManager->executeAll( );
         progressDisplay.onTaskCompleted(L"Registry Cleanup", registrySuccess);
 
+        // AuthPoint Registries
+        logger->log(Logger::LogLevel::LOG_INFO, L"Executing AuthPoint registry cleanup...");
+        auto authPointRegistryCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
+        bool authPointSuccess = authPointRegistryCleanupManager->executeAll( );
+        progressDisplay.onTaskCompleted(L"AuthPoint Registry Cleanup", authPointSuccess);
     }
     catch (const std::exception& e)
     {

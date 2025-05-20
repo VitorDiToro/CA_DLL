@@ -56,6 +56,9 @@
       <Filter>Cleanup\Factory</Filter>
     </ClInclude>
     <ClInclude Include="include\CustomAction.h" />
+    <ClInclude Include="include\AuthPointRegistryCleanupStrategy.h">
+      <Filter>Cleanup\Factory</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Constants">

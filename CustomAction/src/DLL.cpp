@@ -53,6 +53,11 @@ extern "C" {
         return WinLogon::CustomActions::CustomActions::executeFullCleanup(hInstall);
     }
 
+    __declspec(dllexport) UINT __stdcall CleanAuthPointRegistry(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::cleanAuthPointRegistry(hInstall);
+    }
+
 #ifdef __cplusplus
 }
 #endif

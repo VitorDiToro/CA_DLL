@@ -132,6 +132,7 @@
     <ClCompile Include="src\DLL.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AuthPointRegistryCleanupStrategy.h" />
     <ClInclude Include="include\BaseLogger.h" />
     <ClInclude Include="include\CleanupFactory.h" />
     <ClInclude Include="include\CleanupManager.h" />
