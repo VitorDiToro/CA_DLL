@@ -9,12 +9,12 @@ namespace WinLogon::CustomActions::Constants
     class PathConstants
     {
     public:
-        static inline const std::vector<std::wstring> logonAppFoldersPath = {
+        static inline const std::vector<std::wstring_view> logonAppFoldersPath = {
             L"C:\\ProgramData\\WatchGuard\\Logon App",
             L"C:\\Program Files\\WatchGuard\\Logon App"
         };
 
-        static inline const std::vector<std::wstring> watchGuardFoldersPath = {
+        static inline const std::vector<std::wstring_view> watchGuardFoldersPath = {
             L"C:\\ProgramData\\WatchGuard",
             L"C:\\Program Files\\WatchGuard"
         };

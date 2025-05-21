@@ -8,7 +8,7 @@ namespace WinLogon::CustomActions::Constants
     class ConfigConstants
     {
     public:
-        static inline const std::wstring DEFAULT_CONFIG_FILE_NAME = L"wlconfig.cfg";
+        static inline constexpr std::wstring_view DEFAULT_CONFIG_FILE_NAME = L"wlconfig.cfg";
 
         static inline const std::filesystem::path SYSTEM32_CONFIG_PATH = L"C:\\Windows\\System32\\wlconfig.cfg";
         static inline const std::filesystem::path DRIVERS_ETC_CONFIG_PATH = L"C:\\Windows\\System32\\drivers\\etc\\wlconfig.cfg";
@@ -17,8 +17,8 @@ namespace WinLogon::CustomActions::Constants
         static inline const std::filesystem::path CONFIG_PROGRAM_FILES_DESTINATION = L"C:\\Program Files\\WatchGuard\\Logon App\\Resources";
 
 
-        static inline const std::wstring TEMP_INSTALL_CONFIG_NAME = L"InstallConfig.cfg";
-        static inline const std::wstring TEMP_LOCAL_CONFIG_NAME = L"LocalConfig.cfg";
+        static inline constexpr std::wstring_view TEMP_INSTALL_CONFIG_NAME = L"InstallConfig.cfg";
+        static inline constexpr std::wstring_view TEMP_LOCAL_CONFIG_NAME = L"LocalConfig.cfg";
 
         // Get the temporary directory for config files
         static inline std::filesystem::path GetTempConfigDir( )

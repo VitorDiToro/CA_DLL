@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <format>
 
 #include "PathConstants.h"
 #include "DirectoryCleanupStrategy.h"
@@ -22,7 +23,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             return success;
         }
 
-        std::wstring getName() const override
+        std::wstring getName( ) const override
         {
             return L"V4 Files Cleanup Strategy";
         }
@@ -35,7 +36,8 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             bool result = true;
             for (const auto& path : Constants::PathConstants::logonAppFoldersPath)
             {
-                logger->log(Logger::LogLevel::LOG_INFO, L"- Removing " + path + L" folder and its contents...");
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            std::format(L"- Removing {} folder and its contents...", path));
                 result &= removeDirectory(path, logger, true); // true = force remove
             }
 
@@ -49,7 +51,8 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             bool result = true;
             for (const auto& path : Constants::PathConstants::watchGuardFoldersPath)
             {
-                logger->log(Logger::LogLevel::LOG_INFO, L"- Removing " + path + L" folder...");
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            std::format(L"- Removing {} folder...", path));
                 result &= removeDirectory(path, logger, false); // false = only if empty
             }
 

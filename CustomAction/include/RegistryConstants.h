@@ -21,7 +21,6 @@ namespace WinLogon::CustomActions::Constants
             {HKEY_CURRENT_CONFIG, L"HKEY_CURRENT_CONFIG"}
         };
 
-        // TODO: Mover isso para um local mais apropriado.
         static inline std::wstring makeAuthenticationPath(const std::wstring& extra_path, std::wstring_view uuid)
         {
             return std::wstring(L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Authentication\\") + extra_path + L"\\" + std::wstring(uuid);

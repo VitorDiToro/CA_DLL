@@ -32,7 +32,7 @@ namespace WinLogon::CustomActions::Config
                 std::wstring message = L"Parameters:";
                 for (const auto& [key, value] : params)
                 {
-                    message += L"\n\tKey: " + key + L", Value: " + value;
+                    message += std::format(L"\n\tKey: {}, Value: {}", key, value);
                 }
                 logger->log(Logger::LogLevel::LOG_INFO, message);
 
@@ -81,8 +81,8 @@ namespace WinLogon::CustomActions::Config
             catch (const std::exception& e)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::wstring(L"Exception in CopyConfigFileToDestination: ") +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"Exception in CopyConfigFileToDestination: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
                 return ERROR_INSTALL_FAILURE;
             }
             catch (...)
@@ -121,18 +121,18 @@ namespace WinLogon::CustomActions::Config
                 {
                     // Successfully selected a file, set the MSI property
                     logger->log(Logger::LogLevel::LOG_INFO,
-                                std::wstring(L"Selected file: ") + ofn.lpstrFile);
+                                std::format(L"Selected file: {}", ofn.lpstrFile));
 
                     UINT result = MsiSetPropertyW(hInstall, propertyName.c_str( ), ofn.lpstrFile);
                     if (result != ERROR_SUCCESS)
                     {
                         logger->log(Logger::LogLevel::LOG_ERROR,
-                                    std::wstring(L"Failed to set MSI property: ") + propertyName);
+                                    std::format(L"Failed to set MSI property: {}", propertyName));
                         return ERROR_INSTALL_FAILURE;
                     }
 
                     logger->log(Logger::LogLevel::LOG_INFO,
-                                std::wstring(L"Set MSI property ") + propertyName + L" successfully.");
+                                std::format(L"Set MSI property {} successfully.", propertyName));
                     return ERROR_SUCCESS;
                 }
                 else
@@ -145,8 +145,8 @@ namespace WinLogon::CustomActions::Config
             catch (const std::exception& e)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::wstring(L"Exception in OpenFileChooser: ") +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"Exception in OpenFileChooser: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
                 return ERROR_INSTALL_FAILURE;
             }
             catch (...)
@@ -338,7 +338,7 @@ namespace WinLogon::CustomActions::Config
 
         static bool RestoreConfigFile(const std::filesystem::path& sourcePath,
                                       const std::filesystem::path& destDir,
-                                      const std::wstring& destFileName,
+                                      const std::wstring_view& destFileName,
                                       const std::wstring& fileDescription,
                                       std::shared_ptr<Logger::ILogger> logger)
         {
@@ -376,7 +376,7 @@ namespace WinLogon::CustomActions::Config
             try
             {
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            std::wstring(L"Creating ") + Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME + L" file...");
+                            std::format(L"Creating {} file...", Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME));
 
                 // Create directory if it doesn't exist
                 auto destDir = Constants::ConfigConstants::CONFIG_PROGRAM_FILES_DESTINATION;
@@ -394,7 +394,7 @@ namespace WinLogon::CustomActions::Config
                 if (!outFile)
                 {
                     logger->log(Logger::LogLevel::LOG_ERROR,
-                                std::wstring(L"Failed to open file for writing: ") + destPath.wstring( ));
+                                std::format(L"Failed to open file for writing: {}", destPath.wstring( )));
                     return false;
                 }
 
@@ -410,14 +410,14 @@ namespace WinLogon::CustomActions::Config
                 outFile.close( );
 
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME + L" created successfully.");
+                            std::format(L"{} created successfully.", Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME));
                 return true;
             }
             catch (const std::exception& e)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::wstring(L"Exception in CreateConfigFromContent: ") +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"Exception in CreateConfigFromContent: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
                 return false;
             }
         }
@@ -442,22 +442,21 @@ namespace WinLogon::CustomActions::Config
                 auto destPath = destDir / Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME;
 
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            std::wstring(L"Copying configuration file to destination.\n") +
-                            L"      Source: " + sourcePath + L"\n" +
-                            L"      Destination: " + destPath.wstring( ));
+                            std::format(L"Copying configuration file to destination.\n      Source: {}\n      Destination: {}",
+                                        sourcePath, destPath.wstring( )));
 
                 // Copy file
                 std::filesystem::copy_file(sourcePath, destPath, std::filesystem::copy_options::overwrite_existing);
 
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME + L" copied successfully.");
+                            std::format(L"{} copied successfully.", Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME));
                 return true;
             }
             catch (const std::exception& e)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::wstring(L"Exception in SaveConfigFrom: ") +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"Exception in SaveConfigFrom: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
                 return false;
             }
         }
@@ -480,9 +479,8 @@ namespace WinLogon::CustomActions::Config
                 auto updatedPath = path / Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME;
 
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            std::wstring(L"Updating CONFIG_PATH.\n") +
-                            L"      From: " + configPath + L"\n" +
-                            L"      To: " + updatedPath.wstring( ));
+                            std::format(L"Updating CONFIG_PATH.\n      From: {}\n      To: {}",
+                                        configPath, updatedPath.wstring( )));
 
                 normalizedPath = updatedPath.wstring( );
             }
