@@ -43,19 +43,19 @@ extern "C" {
         return WinLogon::CustomActions::CustomActions::createInstallationLogFile(hInstall);
     }
 
-    __declspec(dllexport) UINT __stdcall DeleteWlconfigFile(MSIHANDLE hInstall)
-    {
-        return WinLogon::CustomActions::CustomActions::deleteWlconfigFile(hInstall);
-    }
-
     __declspec(dllexport) UINT __stdcall ExecuteFullCleanup(MSIHANDLE hInstall)
     {
         return WinLogon::CustomActions::CustomActions::executeFullCleanup(hInstall);
     }
 
-    __declspec(dllexport) UINT __stdcall CleanAuthPointRegistry(MSIHANDLE hInstall)
+    __declspec(dllexport) UINT __stdcall ExecuteV3Cleanup(MSIHANDLE hInstall)
     {
-        return WinLogon::CustomActions::CustomActions::cleanAuthPointRegistries(hInstall);
+        return WinLogon::CustomActions::CustomActions::executeV3Cleanup(hInstall);
+    }
+
+    __declspec(dllexport) UINT __stdcall ExecuteV4Cleanup(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::executeV4Cleanup(hInstall);
     }
 
     __declspec(dllexport) UINT __stdcall CopyConfigFileToDestination(MSIHANDLE hInstall)
@@ -66,6 +66,16 @@ extern "C" {
     __declspec(dllexport) UINT __stdcall OpenFileChooser(MSIHANDLE hInstall)
     {
         return WinLogon::CustomActions::CustomActions::openFileChooser(hInstall);
+    }
+
+    __declspec(dllexport) UINT __stdcall CopyConfigFiles(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::copyConfigFiles(hInstall);
+    }
+
+    __declspec(dllexport) UINT __stdcall RestoreConfigFiles(MSIHANDLE hInstall)
+    {
+        return WinLogon::CustomActions::CustomActions::restoreConfigFiles(hInstall);
     }
 
 #ifdef __cplusplus

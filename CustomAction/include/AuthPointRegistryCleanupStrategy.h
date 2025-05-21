@@ -8,14 +8,13 @@
 #include <algorithm>
 #include <functional>
 #include <string_view>
+#include <format>
 
 #include "RegistryCleanupStrategy.h"
 
 namespace WinLogon::CustomActions::Cleanup::Strategies
 {
-    /**
-     * @brief Strategy for cleaning registry entries related to AuthPoint/LogonApp
-     */
+    // Strategy for cleaning registry entries related to AuthPoint/LogonApp
     class AuthPointRegistryCleanupStrategy : public RegistryCleanupStrategy
     {
     private:
@@ -43,12 +42,12 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             // Searching in standard paths
             for (const auto& path : m_standardRegistryPaths)
             {
-                logger->log(LOG_INFO, L"Searching in HKLM\\" + path);
+                logger->log(LOG_INFO, std::format(L"Searching in HKLM\\{}", path));
                 auto entries = findStandardRegistryEntries(HKEY_LOCAL_MACHINE, path, logger);
                 if (!entries.empty( ))
                 {
                     logger->log(LOG_INFO,
-                                L"  Found " + std::to_wstring(entries.size( )) + L" entries in this path.");
+                                std::format(L"  Found {} entries in this path.", entries.size( )));
                     allEntries.insert(allEntries.end( ), entries.begin( ), entries.end( ));
                 }
                 else
@@ -58,13 +57,12 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             }
 
             // Searching in products
-            logger->log(LOG_INFO, L"Searching in HKLM\\" + m_productsRegistryPath);
-            auto productEntries = findProductRegistryEntries(HKEY_LOCAL_MACHINE,
+            logger->log(LOG_INFO, std::format(L"Searching in HKLM\\{}", m_productsRegistryPath));
+            auto productEntries = findProductsRegistryEntries(HKEY_LOCAL_MACHINE,
                                                              m_productsRegistryPath, logger);
             if (!productEntries.empty( ))
             {
-                logger->log(LOG_INFO,
-                            L"  Found " + std::to_wstring(productEntries.size( )) + L" entries in Products.");
+                logger->log(LOG_INFO, std::format(L"  Found {} entries in Products.", productEntries.size( )));
                 allEntries.insert(allEntries.end( ), productEntries.begin( ), productEntries.end( ));
             }
             else
@@ -81,12 +79,12 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             else
             {
                 logger->log(LOG_INFO,
-                            L"Total of " + std::to_wstring(allEntries.size( )) + L" entries found. Removing...");
+                            std::format(L"Total of {} entries found. Removing...", allEntries.size( )));
 
                 for (const auto& entry : allEntries)
                 {
-                    logger->log(LOG_INFO, L"Removing: " + entry.path +
-                                L" (" + entry.displayName + L")");
+                    logger->log(LOG_INFO, std::format(L"Removing: {} ({})",
+                                                      entry.path, entry.displayName));
 
                     bool deleted = deleteRegistryKey(HKEY_LOCAL_MACHINE, entry.path, logger);
                     if (!deleted)
@@ -101,15 +99,14 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             return success;
         }
 
+
         std::wstring getName( ) const override
         {
             return L"AuthPoint Registry Cleanup Strategy";
         }
 
     private:
-        /**
-         * @brief Structure to store registry entry information
-         */
+        // Structure to store registry entry information
         struct RegistryEntry
         {
             std::wstring path;           // Full key path
@@ -130,9 +127,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
 
         const std::wstring m_productsRegistryPath = L"Software\\Classes\\Installer\\Products";
 
-        /**
-         * @brief Checks if a string matches any of the search patterns
-         */
+
         bool matchesAnyPattern(const std::wstring& value) const
         {
             return std::any_of(m_searchStrings.begin( ), m_searchStrings.end( ),
@@ -142,12 +137,8 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             });
         }
 
-        /**
-         * @brief Gets a specific registry value
-         */
-        std::optional<std::wstring> getRegistryValue(HKEY rootKey, const std::wstring& keyPath,
-                                                     const std::wstring& valueName,
-                                                     std::shared_ptr<Logger::ILogger> logger) const
+
+        std::optional<std::wstring> getRegistryValue(HKEY rootKey, const std::wstring& keyPath, const std::wstring& valueName, std::shared_ptr<Logger::ILogger> logger) const
         {
             HKEY hKey = nullptr;
             if (RegOpenKeyExW(rootKey, keyPath.c_str( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
@@ -174,11 +165,8 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             return std::nullopt;
         }
 
-        /**
-         * @brief Finds registry entries in standard paths
-         */
-        std::vector<RegistryEntry> findStandardRegistryEntries(HKEY rootKey, const std::wstring& path,
-                                                               std::shared_ptr<Logger::ILogger> logger) const
+
+        std::vector<RegistryEntry> findStandardRegistryEntries(HKEY rootKey, const std::wstring& path, std::shared_ptr<Logger::ILogger> logger) const
         {
             std::vector<RegistryEntry> results;
 
@@ -208,11 +196,8 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             return results;
         }
 
-        /**
-         * @brief Finds registry entries in Products
-         */
-        std::vector<RegistryEntry> findProductRegistryEntries(HKEY rootKey, const std::wstring& path,
-                                                              std::shared_ptr<Logger::ILogger> logger) const
+
+        std::vector<RegistryEntry> findProductsRegistryEntries(HKEY rootKey, const std::wstring& path, std::shared_ptr<Logger::ILogger> logger) const
         {
             std::vector<RegistryEntry> results;
 
@@ -235,13 +220,13 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             {
                 subKeyNameSize = sizeof(subKeyName) / sizeof(WCHAR);
 
-                std::wstring guidKey = path + L"\\" + subKeyName;
+                std::wstring guidKey = std::format(L"{}\\{}", path, subKeyName);
 
                 // First try ProductName, then InstallProperties/DisplayName
                 auto productName = getRegistryValue(rootKey, guidKey, L"ProductName", logger);
                 if (!productName)
                 {
-                    std::wstring installPropsKey = guidKey + L"\\InstallProperties";
+                    std::wstring installPropsKey = std::format(L"{}\\InstallProperties", guidKey);
                     productName = getRegistryValue(rootKey, installPropsKey, L"DisplayName", logger);
                 }
 
@@ -251,16 +236,13 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
                         .path = guidKey,
                         .displayName = *productName,
                         .guid = subKeyName,
-                        .type = L"Product"});
+                        .type = L"Product" });
                 }
             }
 
             return results;
         }
 
-        /**
-         * @brief Recursively searches registry keys
-         */
         void searchRecursive(HKEY hKey, const std::wstring& keyPath, const std::wstring& relativePath,
                              const std::function<void(const std::wstring&, const std::wstring&)>& callback,
                              std::shared_ptr<Logger::ILogger> logger) const
@@ -269,11 +251,10 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             std::wstring currentPath = keyPath;
             if (!relativePath.empty( ))
             {
-                currentPath += L"\\" + relativePath;
+                currentPath = std::format(L"{}\\{}", keyPath, relativePath);
             }
             callback(currentPath, relativePath);
 
-            // Open this key
             HKEY hSubKey = nullptr;
             if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, currentPath.c_str( ), 0, KEY_READ, &hSubKey) != ERROR_SUCCESS)
             {
@@ -295,9 +276,12 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
                 std::wstring newRelativePath = relativePath;
                 if (!newRelativePath.empty( ))
                 {
-                    newRelativePath += L"\\";
+                    newRelativePath = std::format(L"{}\\{}", relativePath, subKeyName);
                 }
-                newRelativePath += subKeyName;
+                else
+                {
+                    newRelativePath = subKeyName;
+                }
 
                 // Recursive call for the subkey
                 searchRecursive(hKey, keyPath, newRelativePath, callback, logger);

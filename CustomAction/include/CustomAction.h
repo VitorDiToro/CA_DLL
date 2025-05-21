@@ -26,10 +26,6 @@ namespace WinLogon::CustomActions
 
             try
             {
-                // Execute V3 file cleanup
-                auto cleanupManager = Cleanup::CleanupFactory::createV3CleanupManager(hInstall);
-                cleanupManager->executeAll( );
-
                 // Get current date and time
                 std::wstring currentDateTime = getCurrentDateTime( );
 
@@ -62,76 +58,6 @@ namespace WinLogon::CustomActions
                 // Report exception in log
                 logger->log(Logger::LogLevel::LOG_ERROR,
                             std::format(L"Unknown exception when creating installation log file!"));
-                return ERROR_INSTALL_FAILURE;
-            }
-        }
-
-        static UINT deleteWlconfigFile(MSIHANDLE hInstall)
-        {
-            // Path of the file to be deleted
-            const std::wstring filePath = L"C:\\Windows\\System32\\Wlconfig.cfg";
-            auto logger = Logger::LoggerFactory::createLogger(hInstall);
-
-            // Initialize message log
-            logger->log(Logger::LogLevel::LOG_INFO,
-                        std::format(L"Trying to delete file {}...", filePath));
-
-            try
-            {
-                // Create a strategy for a single file
-                class SingleFileCleanupStrategy : public Cleanup::FileCleanupStrategy
-                {
-                public:
-                    explicit SingleFileCleanupStrategy(const std::filesystem::path& path)
-                        : filePath(path)
-                    {
-                    }
-
-                    bool execute(std::shared_ptr<Logger::ILogger> logger) override
-                    {
-                        return removeFile(filePath, logger);
-                    }
-
-                    std::wstring getName( ) const override
-                    {
-                        return L"Single File Cleanup Strategy";
-                    }
-
-                private:
-                    std::filesystem::path filePath;
-                };
-
-                auto fileStrategy = std::make_unique<SingleFileCleanupStrategy>(filePath);
-
-                // Try to delete the file
-                if (fileStrategy->execute(logger))
-                {
-                    // Report success in log
-                    logger->log(Logger::LogLevel::LOG_INFO,
-                                std::format(L"File {} deleted successfully.", filePath));
-                    return ERROR_SUCCESS;
-                }
-                else
-                {
-                    DWORD errorCode = GetLastError( );
-                    logger->log(Logger::LogLevel::LOG_ERROR,
-                                std::format(L"Error deleting the file. Error code: {}", errorCode));
-
-                    // If the file doesn't exist, consider it a success
-                    if (errorCode == ERROR_FILE_NOT_FOUND)
-                    {
-                        logger->log(Logger::LogLevel::LOG_INFO,
-                                    std::format(L"The file does not exist. Continuing installation."));
-                        return ERROR_SUCCESS;
-                    }
-
-                    return ERROR_INSTALL_FAILURE;
-                }
-            }
-            catch (...)
-            {
-                logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::format(L"Exception when trying to delete file {}", filePath));
                 return ERROR_INSTALL_FAILURE;
             }
         }
@@ -174,35 +100,74 @@ namespace WinLogon::CustomActions
             }
         }
 
-        static UINT cleanAuthPointRegistries(MSIHANDLE hInstall)
+
+        static UINT executeV3Cleanup(MSIHANDLE hInstall)
         {
             try
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
-                logger->log(Logger::LogLevel::LOG_INFO, L"Starting AuthPoint registry cleanup...");
 
-                auto authPointCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
-                bool success = authPointCleanupManager->executeAll( );
+                // Create managers individually
+                auto v3CleanupManager = Cleanup::CleanupFactory::createV3CleanupManager(hInstall);
+                auto registryCleanupManager = Cleanup::CleanupFactory::createRegistryCleanupManager(hInstall);
+                auto authPointRegistryCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
 
-                if (success)
-                {
-                    logger->log(Logger::LogLevel::LOG_INFO, L"AuthPoint registry cleanup completed successfully.");
-                    return ERROR_SUCCESS;
-                }
-                else
-                {
-                    logger->log(Logger::LogLevel::LOG_WARNING, L"AuthPoint registry cleanup completed with warnings.");
-                    return ERROR_INSTALL_FAILURE;
-                }
+                // Execute each strategy sequentially
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing V3 files cleanup...");
+                bool v3Success = v3CleanupManager->executeAll( );
+
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing registry cleanup...");
+                bool registrySuccess = registryCleanupManager->executeAll( );
+
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing AuthPoint registry cleanup...");
+                bool authPointSuccess = authPointRegistryCleanupManager->executeAll( );
+
+                // Check overall success of all operations
+                bool overallSuccess = v3Success && registrySuccess && authPointSuccess;
+
+                return overallSuccess ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
             }
             catch (...)
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
-                logger->log(Logger::LogLevel::LOG_ERROR, L"Exception during AuthPoint registry cleanup");
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception during full cleanup");
                 return ERROR_INSTALL_FAILURE;
             }
         }
 
+        static UINT executeV4Cleanup(MSIHANDLE hInstall)
+        {
+            try
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+
+                // Create managers individually
+                auto v4CleanupManager = Cleanup::CleanupFactory::createV4CleanupManager(hInstall);
+                auto registryCleanupManager = Cleanup::CleanupFactory::createRegistryCleanupManager(hInstall);
+                auto authPointRegistryCleanupManager = Cleanup::CleanupFactory::createAuthPointRegistryCleanupManager(hInstall);
+
+                // Execute each strategy sequentially
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing V4 files cleanup...");
+                bool v4Success = v4CleanupManager->executeAll( );
+
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing registry cleanup...");
+                bool registrySuccess = registryCleanupManager->executeAll( );
+
+                logger->log(Logger::LogLevel::LOG_INFO, L"Executing AuthPoint registry cleanup...");
+                bool authPointSuccess = authPointRegistryCleanupManager->executeAll( );
+
+                // Check overall success of all operations
+                bool overallSuccess = v4Success && registrySuccess && authPointSuccess;
+
+                return overallSuccess ? ERROR_SUCCESS : ERROR_INSTALL_FAILURE;
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception during full cleanup");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
 
         static UINT copyConfigFileToDestination(MSIHANDLE hInstall)
         {
@@ -255,24 +220,26 @@ namespace WinLogon::CustomActions
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            std::wstring(L"Exception in copyConfigFileToDestination: ") +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            L"Exception in copyConfigFileToDestination: " + std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
                 return ERROR_INSTALL_FAILURE;
             }
             catch (...)
             {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
-                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in copyConfigFileToDestination");
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            L"Unknown exception in copyConfigFileToDestination");
                 return ERROR_INSTALL_FAILURE;
             }
         }
 
         static UINT openFileChooser(MSIHANDLE hInstall)
         {
+            auto logger = Logger::LoggerFactory::createLogger(hInstall);
+
             try
             {
-                auto logger = Logger::LoggerFactory::createLogger(hInstall);
-                logger->log(Logger::LogLevel::LOG_INFO, L"Starting open file chooser operation...");
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            L"Starting open file chooser operation...");
 
                 // The property to set with the selected file path
                 std::wstring propertyName = L"CONFIG_PATH";
@@ -297,7 +264,6 @@ namespace WinLogon::CustomActions
             }
             catch (const std::exception& e)
             {
-                auto logger = Logger::LoggerFactory::createLogger(hInstall);
                 logger->log(Logger::LogLevel::LOG_ERROR,
                             std::wstring(L"Exception in openFileChooser: ") +
                             std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
@@ -305,8 +271,58 @@ namespace WinLogon::CustomActions
             }
             catch (...)
             {
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            L"Unknown exception in openFileChooser");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
+
+        static UINT copyConfigFiles(MSIHANDLE hInstall)
+        {
+            try
+            {
                 auto logger = Logger::LoggerFactory::createLogger(hInstall);
-                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in openFileChooser");
+                logger->log(Logger::LogLevel::LOG_INFO, L"Starting copy config files operation...");
+
+                return Config::ConfigFileHandler::CopyConfigFiles(hInstall);
+            }
+            catch (const std::exception& e)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::format(L"Exception in copyConfigFiles: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
+                return ERROR_INSTALL_FAILURE;
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in copyConfigFiles");
+                return ERROR_INSTALL_FAILURE;
+            }
+        }
+
+        static UINT restoreConfigFiles(MSIHANDLE hInstall)
+        {
+            try
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_INFO, L"Starting restore config files operation...");
+
+                return Config::ConfigFileHandler::RestoreConfigFiles(hInstall);
+            }
+            catch (const std::exception& e)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::format(L"Exception in restoreConfigFiles: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
+                return ERROR_INSTALL_FAILURE;
+            }
+            catch (...)
+            {
+                auto logger = Logger::LoggerFactory::createLogger(hInstall);
+                logger->log(Logger::LogLevel::LOG_ERROR, L"Unknown exception in restoreConfigFiles");
                 return ERROR_INSTALL_FAILURE;
             }
         }
