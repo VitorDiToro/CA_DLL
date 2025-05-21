@@ -20,7 +20,7 @@ namespace WinLogon::CustomActions::Logger
             std::wstring formatted = formatLogMessage(level, message);
 
             PMSIHANDLE hRecord = MsiCreateRecord(1);
-            MsiRecordSetString(hRecord, 0, formatted.c_str( ));
+            MsiRecordSetString(hRecord, 0, formatted.data( ));
             MsiProcessMessage(msiHandle, INSTALLMESSAGE_INFO, hRecord);
         }
 

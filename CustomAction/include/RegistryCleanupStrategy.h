@@ -40,9 +40,7 @@ namespace WinLogon::CustomActions::Cleanup
             std::wstring errorMessage;
             if (messageBuffer != nullptr && messageLength > 0)
             {
-                // Remover quebras de linha/retornos da mensagem formatada
                 errorMessage = std::wstring(messageBuffer);
-                // Remover caracteres de nova linha no final da mensagem (comum nas mensagens de sistema)
                 while (!errorMessage.empty() && (errorMessage.back() == L'\n' || errorMessage.back() == L'\r'))
                     errorMessage.pop_back();
                 LocalFree(messageBuffer);
@@ -57,7 +55,7 @@ namespace WinLogon::CustomActions::Cleanup
 
         bool deleteRegistryKey(HKEY hKeyRoot, const std::wstring& subKey, std::shared_ptr<Logger::ILogger> logger) const
         {
-            LONG result = RegDeleteTreeW(hKeyRoot, subKey.c_str());
+            LONG result = RegDeleteTreeW(hKeyRoot, subKey.data());
             if (result == ERROR_SUCCESS)
             {
                 logger->log(Logger::LogLevel::LOG_INFO,
@@ -80,7 +78,7 @@ namespace WinLogon::CustomActions::Cleanup
         }
 
     public:
-        // Implementação específica será fornecida por classes derivadas
+        // Specific implementation will be provided by derived classes
         bool execute(std::shared_ptr<Logger::ILogger> logger) override = 0;
         std::wstring getName() const override = 0;
     };

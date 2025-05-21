@@ -251,7 +251,7 @@ namespace WinLogon::CustomActions
                     // Get the value we just set
                     WCHAR szConfigPath[MAX_PATH] = { 0 };
                     DWORD cchConfigPath = sizeof(szConfigPath) / sizeof(szConfigPath[0]);
-                    UINT propResult = MsiGetPropertyW(hInstall, propertyName.c_str( ), szConfigPath, &cchConfigPath);
+                    UINT propResult = MsiGetPropertyW(hInstall, propertyName.data( ), szConfigPath, &cchConfigPath);
 
                     if (propResult == ERROR_SUCCESS && szConfigPath[0] != L'\0')
                     {

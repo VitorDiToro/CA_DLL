@@ -101,21 +101,11 @@ namespace WinLogon::CustomActions::Config
 
             try
             {
-                OPENFILENAMEW ofn;
-                wchar_t szFile[MAX_PATH] = { 0 };
+                std::wstring_view initialDir = getMsiDir(hInstall, logger);
 
-                // Initialize OPENFILENAME
-                ZeroMemory(&ofn, sizeof(ofn));
-                ofn.lStructSize = sizeof(ofn);
-                ofn.hwndOwner = NULL;
-                ofn.lpstrFile = szFile;
-                ofn.nMaxFile = sizeof(szFile);
-                ofn.lpstrFilter = L"Configuration Files (*.cfg)\0*.cfg\0All Files (*.*)\0*.*\0";
-                ofn.nFilterIndex = 1;
-                ofn.lpstrFileTitle = NULL;
-                ofn.nMaxFileTitle = 0;
-                ofn.lpstrInitialDir = NULL;
-                ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+                OPENFILENAMEW ofn;
+                createSearchFileDialog(ofn, initialDir);
+
 
                 if (GetOpenFileNameW(&ofn))
                 {
@@ -123,17 +113,8 @@ namespace WinLogon::CustomActions::Config
                     logger->log(Logger::LogLevel::LOG_INFO,
                                 std::format(L"Selected file: {}", ofn.lpstrFile));
 
-                    UINT result = MsiSetPropertyW(hInstall, propertyName.c_str( ), ofn.lpstrFile);
-                    if (result != ERROR_SUCCESS)
-                    {
-                        logger->log(Logger::LogLevel::LOG_ERROR,
-                                    std::format(L"Failed to set MSI property: {}", propertyName));
-                        return ERROR_INSTALL_FAILURE;
-                    }
 
-                    logger->log(Logger::LogLevel::LOG_INFO,
-                                std::format(L"Set MSI property {} successfully.", propertyName));
-                    return ERROR_SUCCESS;
+                    return setMsiProperty(hInstall, propertyName, ofn, logger);
                 }
                 else
                 {
@@ -155,6 +136,7 @@ namespace WinLogon::CustomActions::Config
                 return ERROR_INSTALL_FAILURE;
             }
         }
+
 
 
         static UINT CopyConfigFiles(MSIHANDLE hInstall)
@@ -400,12 +382,12 @@ namespace WinLogon::CustomActions::Config
 
                 // Convert wstring to UTF-8
                 std::string utf8Content;
-                int size_needed = WideCharToMultiByte(CP_UTF8, 0, content.c_str( ), -1, NULL, 0, NULL, NULL);
+                int size_needed = WideCharToMultiByte(CP_UTF8, 0, content.data( ), -1, NULL, 0, NULL, NULL);
                 utf8Content.resize(size_needed);
-                WideCharToMultiByte(CP_UTF8, 0, content.c_str( ), -1, &utf8Content[0], size_needed, NULL, NULL);
+                WideCharToMultiByte(CP_UTF8, 0, content.data( ), -1, &utf8Content[0], size_needed, NULL, NULL);
 
                 // Write to file
-                outFile.write(utf8Content.c_str( ), utf8Content.size( ) - 1);  // -1 to exclude null terminator
+                outFile.write(utf8Content.data( ), utf8Content.size( ) - 1);  // -1 to exclude null terminator
                 outFile.flush( );
                 outFile.close( );
 
@@ -486,6 +468,60 @@ namespace WinLogon::CustomActions::Config
             }
 
             return normalizedPath;
+        }
+
+        static UINT setMsiProperty(MSIHANDLE hInstall, const std::wstring& propertyName, OPENFILENAMEW& ofn, std::shared_ptr<WinLogon::CustomActions::Logger::ILogger>& logger)
+        {
+            if (UINT result = MsiSetPropertyW(hInstall, propertyName.data( ), ofn.lpstrFile);
+                result != ERROR_SUCCESS)
+            {
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::format(L"Failed to set MSI property: {}", propertyName));
+                return ERROR_INSTALL_FAILURE;
+            }
+
+            logger->log(Logger::LogLevel::LOG_INFO,
+                        std::format(L"Set MSI property {} successfully.", propertyName));
+
+            return ERROR_SUCCESS;
+        }
+
+        static void createSearchFileDialog(OPENFILENAMEW& ofn, std::wstring_view const& initialDir)
+        {
+            wchar_t szFile[MAX_PATH] = { 0 };
+
+            // Initialize OPENFILENAME
+            ZeroMemory(&ofn, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = NULL;
+            ofn.lpstrFile = szFile;
+            ofn.nMaxFile = sizeof(szFile);
+            ofn.lpstrFilter = L"Configuration Files (*.cfg)\0*.cfg\0All Files (*.*)\0*.*\0";
+            ofn.nFilterIndex = 1;
+            ofn.lpstrFileTitle = NULL;
+            ofn.nMaxFileTitle = 0;
+            ofn.lpstrInitialDir = initialDir.empty( ) ? NULL : initialDir.data( );
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+        }
+
+        static std::wstring_view getMsiDir(MSIHANDLE hInstall, std::shared_ptr<WinLogon::CustomActions::Logger::ILogger>& logger)
+        {
+            std::wstring initialDir{ };
+
+            // Get the MSI path
+            WCHAR msiPath[MAX_PATH] = { 0 };
+            DWORD msiPathSize = sizeof(msiPath) / sizeof(msiPath[0]);
+            UINT result = MsiGetPropertyW(hInstall, L"OriginalDatabase", msiPath, &msiPathSize);
+
+            if (result == ERROR_SUCCESS && msiPath[0] != L'\0')
+            {
+                std::filesystem::path msiFilePath(msiPath);
+                initialDir = msiFilePath.parent_path( ).wstring( );
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            std::format(L"Using MSI directory as initial dir: {}", initialDir));
+            }
+
+            return initialDir.data();
         }
     };
 }

@@ -141,7 +141,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
         std::optional<std::wstring> getRegistryValue(HKEY rootKey, const std::wstring& keyPath, const std::wstring& valueName, std::shared_ptr<Logger::ILogger> logger) const
         {
             HKEY hKey = nullptr;
-            if (RegOpenKeyExW(rootKey, keyPath.c_str( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+            if (RegOpenKeyExW(rootKey, keyPath.data( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
             {
                 return std::nullopt;
             }
@@ -153,7 +153,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             DWORD bufferSize = sizeof(buffer);
             DWORD type;
 
-            if (RegQueryValueExW(hKey, valueName.c_str( ), nullptr, &type,
+            if (RegQueryValueExW(hKey, valueName.data( ), nullptr, &type,
                                  reinterpret_cast<LPBYTE>(buffer), &bufferSize) == ERROR_SUCCESS)
             {
                 if (type == REG_SZ || type == REG_EXPAND_SZ)
@@ -171,7 +171,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             std::vector<RegistryEntry> results;
 
             HKEY hKey = nullptr;
-            if (RegOpenKeyExW(rootKey, path.c_str( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+            if (RegOpenKeyExW(rootKey, path.data( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
             {
                 return results;
             }
@@ -202,7 +202,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             std::vector<RegistryEntry> results;
 
             HKEY hKey = nullptr;
-            if (RegOpenKeyExW(rootKey, path.c_str( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+            if (RegOpenKeyExW(rootKey, path.data( ), 0, KEY_READ, &hKey) != ERROR_SUCCESS)
             {
                 return results;
             }
@@ -256,7 +256,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             callback(currentPath, relativePath);
 
             HKEY hSubKey = nullptr;
-            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, currentPath.c_str( ), 0, KEY_READ, &hSubKey) != ERROR_SUCCESS)
+            if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, currentPath.data( ), 0, KEY_READ, &hSubKey) != ERROR_SUCCESS)
             {
                 return;
             }
