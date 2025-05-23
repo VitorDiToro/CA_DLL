@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <format>
 
 #include "LoggerFactory.h"
 #include "ICleanupStrategy.h"
@@ -18,20 +19,20 @@ namespace WinLogon::CustomActions::Cleanup
             strategies.emplace_back(std::move(strategy));
         }
 
-        bool executeAll()
+        bool executeAll( )
         {
             bool overallSuccess = true;
 
             for (const auto& strategy : strategies)
             {
                 logger->log(Logger::LogLevel::LOG_INFO,
-                           L"Executing cleanup strategy: " + strategy->getName());
+                            std::format(L"Executing cleanup strategy: {}", strategy->getName( )));
 
                 bool success = strategy->execute(logger);
                 if (!success)
                 {
                     logger->log(Logger::LogLevel::LOG_WARNING,
-                               L"Strategy " + strategy->getName() + L" reported issues.");
+                                std::format(L"Strategy {} reported issues.", strategy->getName( )));
                 }
 
                 overallSuccess &= success;

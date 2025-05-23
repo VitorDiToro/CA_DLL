@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <filesystem>
+#include <format>
 
 #include "ICleanupStrategy.h"
 
@@ -17,7 +18,7 @@ namespace WinLogon::CustomActions::Cleanup
                 if (!std::filesystem::exists(filePath))
                 {
                     logger->log(Logger::LogLevel::LOG_INFO,
-                                L"  File " + filePath.wstring( ) + L" not found.");
+                                std::format(L"  File {} not found.", filePath.wstring( )));
                     return true;
                 }
 
@@ -26,7 +27,7 @@ namespace WinLogon::CustomActions::Cleanup
                 if (fileAttributes == INVALID_FILE_ATTRIBUTES)
                 {
                     logger->log(Logger::LogLevel::LOG_ERROR,
-                                L"  Could not get attributes for: " + filePath.wstring( ) + L".");
+                                std::format(L"  Could not get attributes for: {}.", filePath.wstring( )));
                     return false;
                 }
 
@@ -35,36 +36,36 @@ namespace WinLogon::CustomActions::Cleanup
                     (!SetFileAttributesW(filePath.c_str( ), FILE_ATTRIBUTE_NORMAL)))
                 {
                     logger->log(Logger::LogLevel::LOG_ERROR,
-                                L"  Could not modify attributes for: " + filePath.wstring( ) + L".");
+                                std::format(L"  Could not modify attributes for: {}.", filePath.wstring( )));
                     return false;
                 }
-
 
                 // Try to delete the file
                 if (std::filesystem::remove(filePath))
                 {
                     logger->log(Logger::LogLevel::LOG_INFO,
-                                L"  File " + filePath.wstring( ) + L" successfully removed.");
+                                std::format(L"  File {} successfully removed.", filePath.wstring( )));
                     return true;
                 }
                 else
                 {
                     logger->log(Logger::LogLevel::LOG_ERROR,
-                                L"  Failed to remove: " + filePath.wstring( ) + L".");
+                                std::format(L"  Failed to remove: {}.", filePath.wstring( )));
                     return false;
                 }
             }
             catch (const std::filesystem::filesystem_error& e)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
-                            L"  Exception when removing file: " + filePath.wstring( ) + L". - " +
-                            std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"  Exception when removing file: {}. - {}",
+                                        filePath.wstring( ),
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
                 return false;
             }
         }
 
     public:
-        // Implementação específica será fornecida por classes derivadas
+        // Specific implementation will be provided by derived classes
         bool execute(std::shared_ptr<Logger::ILogger> logger) override = 0;
         std::wstring getName( ) const override = 0;
     };

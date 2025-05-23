@@ -25,14 +25,14 @@ namespace WinLogon::CustomActions::Cleanup
                 if (!std::filesystem::exists(path))
                 {
                     logger->log(Logger::LogLevel::LOG_INFO,
-                                L"  Directory already deleted (not found): " + path.wstring( ));
+                                std::format(L"  Directory already deleted (not found): {}", path.wstring( )));
                     return true; // Consider it a success if the directory already doesn't exist
                 }
 
                 if (!forceRemove && !isDirectoryEmpty(path))
                 {
                     logger->log(LOG_WARNING,
-                                L"  The " + path.wstring( ) + L" folder contains other files or sub-folders.");
+                                std::format(L"  The {} folder contains other files or sub-folders.", path.wstring( )));
                     logger->log(LOG_INFO,
                                 L"  Listing remaining content:");
 
@@ -40,11 +40,11 @@ namespace WinLogon::CustomActions::Cleanup
                     for (const auto& entry : std::filesystem::directory_iterator(path))
                     {
                         logger->log(LOG_INFO,
-                                    L"    - " + entry.path( ).filename( ).wstring( ));
+                                    std::format(L"    - {}", entry.path( ).filename( ).wstring( )));
                     }
 
                     logger->log(LOG_WARNING,
-                                L"  The " + path.wstring( ) + L" folder will not be removed to preserve the data above.");
+                                std::format(L"  The {} folder will not be removed to preserve the data above.", path.wstring( )));
                     return true; // Return true since this is expected behavior
                 }
 
@@ -54,8 +54,9 @@ namespace WinLogon::CustomActions::Cleanup
                 if (errorCode)
                 {
                     logger->log(LOG_ERROR,
-                                L"  Failed to remove directory: " + path.wstring( ) +
-                                L" - Error: " + std::wstring(errorCode.message( ).begin( ), errorCode.message( ).end( )));
+                                std::format(L"  Failed to remove directory: {} - Error: {}",
+                                            path.wstring( ),
+                                            std::wstring(errorCode.message( ).begin( ), errorCode.message( ).end( ))));
                     return false;
                 }
 
@@ -67,8 +68,9 @@ namespace WinLogon::CustomActions::Cleanup
             catch (const std::filesystem::filesystem_error& e)
             {
                 logger->log(LOG_ERROR,
-                            L"  Exception while removing directory: " + path.wstring( ) +
-                            L" - " + std::wstring(e.what( ), e.what( ) + strlen(e.what( ))));
+                            std::format(L"  Exception while removing directory: {} - {}",
+                                        path.wstring( ),
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
 
                 // Try to identify if there are files in use
                 logProblematicFiles(path, logger);
@@ -98,7 +100,7 @@ namespace WinLogon::CustomActions::Cleanup
                                 (!SetFileAttributesW(entry.path( ).c_str( ), FILE_ATTRIBUTE_NORMAL)))
                             {
                                 logger->log(Logger::LogLevel::LOG_WARNING,
-                                            L"  - File possibly in use: " + entry.path( ).wstring( ));
+                                            std::format(L"  - File possibly in use: {}", entry.path( ).wstring( )));
                             }
 
                         }
@@ -106,7 +108,7 @@ namespace WinLogon::CustomActions::Cleanup
                     catch (...)
                     {
                         logger->log(Logger::LogLevel::LOG_WARNING,
-                                    L"  - Unable to access: " + entry.path( ).wstring( ));
+                                    std::format(L"  - Unable to access: {}", entry.path( ).wstring( )));
                     }
                 }
             }

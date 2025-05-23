@@ -43,7 +43,10 @@ namespace WinLogon::CustomActions::Config
 
                 auto it = params.find(L"configInCurrentFolder");
                 if (it != params.end( ) && !it->second.empty( ))
+                {
+
                     configInCurrentFolder = it->second;
+                }
 
                 it = params.find(L"customParameterConfigPath");
                 if (it != params.end( ) && !it->second.empty( ))
@@ -57,16 +60,25 @@ namespace WinLogon::CustomActions::Config
                 // Note: Keep this specific order. It's important to check for content first, then path, and finally current folder.
                 if (customConfigContent.has_value( ))
                 {
+                    message = std::format(L"customConfigContent: {}", customConfigContent.value( ));
+                    logger->log(Logger::LogLevel::LOG_INFO, message);
+
                     if (!CreateConfigFromContent(customConfigContent.value( ), logger))
                         return ERROR_INSTALL_FAILURE;
                 }
                 else if (customConfigPath.has_value( ))
                 {
+                    message = std::format(L"customConfigPath: {}", customConfigPath.value( ));
+                    logger->log(Logger::LogLevel::LOG_INFO, message);
+
                     if (!SaveConfigFrom(customConfigPath.value( ), logger))
                         return ERROR_INSTALL_FAILURE;
                 }
                 else if (configInCurrentFolder.has_value( ))
                 {
+                    message = std::format(L"configInCurrentFolder: {}", configInCurrentFolder.value( ));
+                    logger->log(Logger::LogLevel::LOG_INFO, message);
+
                     if (!SaveConfigFrom(configInCurrentFolder.value( ), logger))
                         return ERROR_INSTALL_FAILURE;
                 }
@@ -136,7 +148,6 @@ namespace WinLogon::CustomActions::Config
                 return ERROR_INSTALL_FAILURE;
             }
         }
-
 
 
         static UINT CopyConfigFiles(MSIHANDLE hInstall)
@@ -446,33 +457,69 @@ namespace WinLogon::CustomActions::Config
 
         static std::wstring NormalizeSourcePath(const std::wstring& configPath, std::shared_ptr<Logger::ILogger> logger)
         {
-            std::wstring normalizedPath = configPath;
-
-            // If path doesn't end with .cfg, assume it's a directory and append the default filename
-            if (normalizedPath.find(L".cfg") == std::wstring::npos)
+            try
             {
-                std::filesystem::path path(normalizedPath);
+                // First, normalize the path to an absolute path
+                std::filesystem::path path(configPath);
                 path = std::filesystem::absolute(path);
 
-                // Ensure it's a directory
-                if (!path.string( ).empty( ) && path.string( ).back( ) != '\\' && path.string( ).back( ) != '/')
-                    path /= L"\\";  // Add trailing backslash if missing
+                // Dispatch to appropriate handler based on path existence
+                if (std::filesystem::exists(path))
+                {
+                    return NormalizeExistingPath(path, logger);
+                }
+                else
+                {
+                    logger->log(Logger::LogLevel::LOG_INFO,
+                                std::format(L"Path {} doesn't exist.", path.wstring( )));
+                }
+            }
+            catch (const std::exception& e)
+            {
+                // In case of error, log and return the original path
+                logger->log(Logger::LogLevel::LOG_ERROR,
+                            std::format(L"Error in NormalizeSourcePath: {}",
+                                        std::wstring(e.what( ), e.what( ) + strlen(e.what( )))));
 
+                return configPath;
+            }
+        }
+
+
+        static std::wstring NormalizeExistingPath(const std::filesystem::path& path, std::shared_ptr<Logger::ILogger> logger)
+        {
+            // If the path exists, check if it's a directory
+            if (std::filesystem::is_directory(path))
+            {
+                // It's a directory, so append the default file name
                 auto updatedPath = path / Constants::ConfigConstants::DEFAULT_CONFIG_FILE_NAME;
 
                 logger->log(Logger::LogLevel::LOG_INFO,
-                            std::format(L"Updating CONFIG_PATH.\n      From: {}\n      To: {}",
-                                        configPath, updatedPath.wstring( )));
+                            std::format(L"Path is an existing directory. Updating CONFIG_PATH.\n      From: {}\n      To: {}",
+                                        path.wstring( ), updatedPath.wstring( )));
 
-                normalizedPath = updatedPath.wstring( );
+                return updatedPath.wstring( );
             }
+            else
+            {
+                // It's a file, return without modification
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            std::format(L"Path is an existing file. Using as is: {}", path.wstring( )));
 
-            return normalizedPath;
+                return path.wstring( );
+            }
         }
 
-        static UINT setMsiProperty(MSIHANDLE hInstall, const std::wstring& propertyName, OPENFILENAMEW& ofn, std::shared_ptr<WinLogon::CustomActions::Logger::ILogger>& logger)
+
+        static UINT setMsiProperty(MSIHANDLE hInstall, const std::wstring& propertyName,
+                                   OPENFILENAMEW& ofn, std::shared_ptr<WinLogon::CustomActions::Logger::ILogger>& logger)
         {
-            if (UINT result = MsiSetPropertyW(hInstall, propertyName.data( ), ofn.lpstrFile);
+            std::wstring filePath(ofn.lpstrFile);
+
+            delete[] ofn.lpstrFile;
+
+
+            if (UINT result = MsiSetPropertyW(hInstall, propertyName.c_str( ), filePath.c_str( ));
                 result != ERROR_SUCCESS)
             {
                 logger->log(Logger::LogLevel::LOG_ERROR,
@@ -481,21 +528,23 @@ namespace WinLogon::CustomActions::Config
             }
 
             logger->log(Logger::LogLevel::LOG_INFO,
-                        std::format(L"Set MSI property {} successfully.", propertyName));
+                        std::format(L"Set MSI property {} successfully with value: {}", propertyName, filePath));
 
             return ERROR_SUCCESS;
         }
 
+
         static void createSearchFileDialog(OPENFILENAMEW& ofn, std::wstring_view const& initialDir)
         {
-            wchar_t szFile[MAX_PATH] = { 0 };
+            wchar_t* szFile = new wchar_t[MAX_PATH];
+            ZeroMemory(szFile, MAX_PATH * sizeof(wchar_t));
 
             // Initialize OPENFILENAME
             ZeroMemory(&ofn, sizeof(ofn));
             ofn.lStructSize = sizeof(ofn);
             ofn.hwndOwner = NULL;
             ofn.lpstrFile = szFile;
-            ofn.nMaxFile = sizeof(szFile);
+            ofn.nMaxFile = MAX_PATH; // Number of chars, not bytes.
             ofn.lpstrFilter = L"Configuration Files (*.cfg)\0*.cfg\0All Files (*.*)\0*.*\0";
             ofn.nFilterIndex = 1;
             ofn.lpstrFileTitle = NULL;
@@ -503,6 +552,7 @@ namespace WinLogon::CustomActions::Config
             ofn.lpstrInitialDir = initialDir.empty( ) ? NULL : initialDir.data( );
             ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
         }
+
 
         static std::wstring_view getMsiDir(MSIHANDLE hInstall, std::shared_ptr<WinLogon::CustomActions::Logger::ILogger>& logger)
         {

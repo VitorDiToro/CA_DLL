@@ -1,5 +1,7 @@
 #pragma once
 
+#include <format>
+
 #include "PathConstants.h"
 #include "FileCleanupStrategy.h"
 
@@ -18,7 +20,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             for (const auto& filePath : Constants::PathConstants::filesFromV3ToRemove)
             {
                 logger->log(LOG_INFO,
-                            L"- Processing: " + filePath.wstring());
+                            std::format(L"- Processing: {}", filePath.wstring( )));
                 success &= removeFile(filePath, logger);
             }
 
@@ -27,7 +29,7 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             return success;
         }
 
-        std::wstring getName() const override
+        std::wstring getName( ) const override
         {
             return L"V3 Files Cleanup Strategy";
         }

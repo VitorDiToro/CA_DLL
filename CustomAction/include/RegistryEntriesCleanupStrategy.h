@@ -1,6 +1,9 @@
 #pragma once
-#include "RegistryCleanupStrategy.h"
+
+#include <format>
+
 #include "RegistryConstants.h"
+#include "RegistryCleanupStrategy.h"
 
 namespace WinLogon::CustomActions::Cleanup::Strategies
 {
@@ -12,18 +15,19 @@ namespace WinLogon::CustomActions::Cleanup::Strategies
             using enum WinLogon::CustomActions::Logger::LogLevel;
             logger->log(Logger::LogLevel::LOG_INFO, L"=== Deleting Registry Entries - Started ===");
 
-            bool success = true;
-            for (const auto& keyPair : Constants::RegistryConstants::getInstallationKeysToDelete())
+            bool result = true;
+            for (const auto& keyPair : Constants::RegistryConstants::getInstallationKeysToDelete( ))
             {
-                logger->log(Logger::LogLevel::LOG_INFO, L"- Processing: " + formatKeyPath(keyPair) + L".");
-                success &= deleteRegistryKey(keyPair.first, keyPair.second, logger);
+                logger->log(Logger::LogLevel::LOG_INFO,
+                            std::format(L"- Processing: {}.", formatKeyPath(keyPair)));
+                result &= deleteRegistryKey(keyPair.first, keyPair.second, logger);
             }
 
             logger->log(Logger::LogLevel::LOG_INFO, L"=== Deleting Registry Entries - Finished! ===\n");
-            return success;
+            return result;
         }
 
-        std::wstring getName() const override
+        std::wstring getName( ) const override
         {
             return L"Registry Entries Cleanup Strategy";
         }
